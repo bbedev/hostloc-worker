@@ -474,7 +474,7 @@ async function postReply(req,env,ctx,path){
  
  const csrftoken=getCookie(req,"kepcsrf")
  
- if (!nonce.startsWith(csrftoken)) {
+ if (!csrftoken || !nonce || !nonce.startsWith(csrftoken)) {
 	 return new Response("post format err")
  }
 
@@ -590,7 +590,7 @@ async function newTopic(req,env,ctx){
  
  const csrftoken=getCookie(req,"kepcsrf")
  
- if (!nonce.startsWith(csrftoken)) {
+ if (!csrftoken || !nonce || !nonce.startsWith(csrftoken)) {
 	 return new Response("post format err")
  }
 
