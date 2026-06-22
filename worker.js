@@ -113,30 +113,7 @@ async function checkBasicAuth(req, env) {
 	  return { ok: true };
   }}
   }
-  
-  const auth = req.headers.get("Authorization");
-  if (!auth || !auth.startsWith("Basic ")) {
-    return { ok: false, status: 401 };
-  }
-
-  try {
-    const encoded = auth.slice(6);
-    const decoded = atob(encoded);
-
-    const idx = decoded.indexOf(":");
-    if (idx === -1) return { ok: false, status: 403 };
-
-    const username = decoded.slice(0, idx);
-    const password = decoded.slice(idx + 1);
-
-    if (username === env.USER && password === env.PASSWD) {
-      return { ok: true };
-    }
-
-    return { ok: false, status: 403 };
-  } catch (e) {
-    return { ok: false, status: 403 };
-  }
+  return { ok: false, status: 403 };
 }
 
 function mask(str, key = 0) {
@@ -357,15 +334,41 @@ async function changePost(env,topichex,cmd,set){
 
 async function login(req,env){
 	const auth = await checkBasicAuth(req, env);
-		if (!auth.ok) {
-			if (auth.status === 401) {
-			return new Response("Unauthorized", {
-				status: 401,
-				headers: { "WWW-Authenticate": 'Basic realm="Login required"' }
-			});
+	if (auth.ok) {
+		const domain = env.domain;
+		const csrftoken=getCookie(req,"kepcsrf")
+		return json({
+			status:1,
+			user:domain,
+			nonce: csrftoken
+		})
+	}
+	if (req.method !== "POST" ) {
+		return json({status:0});
+	}
+		try {
+			const data = await req.json();
+			if (!data) {
+				return json({status:0});
 			}
-			return new Response("Forbidden", { status: 403 });
+			const enableLimit = env.enable_limit == "1"
+			if (enableLimit){
+				const ip = req.headers.get("CF-Connecting-IP") || "localhost";
+				const limitd = await env.NerLimit.limit({ key: ip })
+				if (!limitd) {
+					return json({status:0});
+				}
+			}
+			if (!data.user || !data.token) {
+				return json({status:0});
+			}
+			if (data.user !== env.USER || data.token !== env.PASSWD) {
+				return json({status:0});
+			}
+		} catch {
+			return json({status:0});
 		}
+
 const domain = env.domain;
 const csrftoken=rand();
 const deadline = String(now()+604800);
@@ -520,10 +523,18 @@ async function postReply(req,env,ctx,path){
  }
  const domain=env.domain
  
+ const limit1 = env.enable_limit == "1"
+ if (limit1){
+	const limitd = await env.NerLimit.limit({ key: "reply:me" })
+	if (!limitd) {
+		return json({status:"reply rate limit exceeded"})
+	}
+ }
+ 
  const newdata = await makedata(env,domain,text,pointtohex,0,0);
  
  if (!newdata.ok) {
-	 return json({status:"key noy set"})
+	 return json({status:"key not set"})
  }
  const id = thread.length+1
 
@@ -744,6 +755,14 @@ async function newTopic(req,env,ctx){
 
  }
  
+ const limit2 = env.enable_metadata == "1"
+ if (limit2){
+	const limitd = await env.metaLimit.limit({ key: "topic:me" })
+	if (!limitd) {
+		return new Response("topic rate limit exceeded")
+	}
+ }
+		
  const newdata = await makedata(env,domain,markdown,"",typeid,tag);
  
  if (!newdata.ok) {
@@ -1208,19 +1227,35 @@ async function handleMsg(env,parsed,buf1,skiptoken) {
 	}
 	
 	if (point_to.length > 1) {
+		const limit1 = env.enable_limit == "1"
+		if (limit1){
+			const limitd = await env.NerLimit.limit({ key: domain_str })
+			if (!limitd) {
+				console.log("too many request1:"+domain_str);
+				return;
+			}
+		}
 		const hex=uint8ArrayToHex(t_hash)
 		const pointto=uint8ArrayToHex(point_to)
 		const text = new TextDecoder().decode(txt)
 		const addok = await addReply(env,pointto,hex,domain_str,text,tag,typeId)
 		if (addok) {
-			sendMsg(env,bodybuf,skiptoken);
+			await sendMsg(env,bodybuf,skiptoken);
 		}
 	} else {
+		const limit2 = env.enable_metadata == "1"
+		if (limit2){
+			const limitd = await env.metaLimit.limit({ key: domain_str })
+			if (!limitd) {
+				console.log("too many request2:"+domain_str);
+				return;
+			}
+		}
 		const hex=uint8ArrayToHex(t_hash)
 		const text = new TextDecoder().decode(txt)
 		const addok = await addTopic(env,hex,text,tag2,typeId,domain_str)
 		if (addok) {
-			sendMsg(env,bodybuf,skiptoken);
+			await sendMsg(env,bodybuf,skiptoken);
 		}
 	}
 }
@@ -1323,7 +1358,7 @@ async function getMeta(env,domain_str){
 	img=encodeURIComponent(img);
 	img=img.replace(/%2F/gi, "/").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	img='https://'+img;
-	}
+	} else {img="";}
 	if (nme.startsWith("xn--")) {nme=punycodeDecode(nme.slice(4));}
 	nme=nme.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	
