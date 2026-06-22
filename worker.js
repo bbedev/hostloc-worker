@@ -45,14 +45,14 @@ export default {
     return me(req, env)
 
    if (path.startsWith("/index/") && req.method === "GET")
-    return indexList(req, env, path)
+    return indexList(req, env, path, ctx)
 
    if (path.startsWith("/v1/"))
      return acceptMsg(req, env, ctx)
 
    if (path.startsWith("/view/")) {
     if (req.method === "GET")
-     return viewThread(req, env, path)
+     return viewThread(req, env, path, ctx)
 
     if (req.method === "POST") {
 		const auth = await checkBasicAuth(req, env);
@@ -406,7 +406,7 @@ async function me(req,env){
  })
 }
 
-async function indexList(req,env,path){
+async function indexList(req,env,path,ctx){
 
  const page = parseInt(path.split("/")[3]) || 1
 
@@ -418,6 +418,18 @@ async function indexList(req,env,path){
  const end = start+PAGE_SIZE
 
  const slice = sorted.slice(start,end)
+ 
+ const metaon = env.enable_metadata == "1";
+ if (metaon){
+ const lastmeta=slice[0]?.meta_time ?? 0;
+ if (lastmeta + 7200 < now()) {
+	const auth = await checkBasicAuth(req, env);
+	if (auth.ok) {
+		const renew1 = await env.metaLimit.limit({ key: "index" }) //1 per 10s
+		if (renew1) {
+			ctx.waitUntil(updateIndexMeta(env,slice));
+		}
+ }}}
 
  const out = slice.map(i=>({
 
@@ -436,7 +448,7 @@ async function indexList(req,env,path){
 
 }
 
-async function viewThread(req,env,path){
+async function viewThread(req,env,path,ctx){
 
  const hex = path.split("/")[3]
 
@@ -446,6 +458,19 @@ async function viewThread(req,env,path){
   return new Response("post not found",{status:404})
 
  const firstUser = data[0]?.user
+
+ const metaon = env.enable_metadata == "1";
+ if (metaon){
+ const lastmeta=data[0]?.meta_time ?? 0;
+ if (lastmeta + 7200 < now()) {
+	const auth = await checkBasicAuth(req, env);
+	if (auth.ok) {
+		const renew1 = await env.metaLimit.limit({ key: hex }) //1 per 10s
+		if (renew1) {
+			ctx.waitUntil(updatePostMeta(env,hex));
+		}
+	}
+ }}
 
  const out = data.map(p=>({
 
@@ -507,6 +532,7 @@ async function postReply(req,env,ctx,path){
   id:id,
   user:domain,
   meta:"",
+  meta_time:0,
   post:text,
   post_time:time,
   first_time:time,
@@ -539,6 +565,67 @@ async function appendIndex(env,item){
   list=[]
 
  list.push(item)
+
+ await env.FORUM.put(
+  "index:list",
+  JSON.stringify(list)
+ )
+
+}
+
+async function updatePostMeta(env,topichex){
+	
+ let thread = await env.FORUM.get("thread:"+topichex,"json")
+
+ if(!thread)
+  return
+
+ const usr = new Set()
+ for (const p of thread) {
+	if (p.user) usr.add(p.user)
+ }
+
+ const metaData = new Map()
+ await Promise.all(
+    [...usr].map(async (u)=>{
+      const m = await getMeta(env, u)
+      metaData.set(u, m)
+    })
+ )
+
+ const nowtime=now();
+ for (const p of thread) {
+    const m = metaData.get(p.user)
+    if (m) {
+      p.meta = m
+      p.meta_time = nowtime
+    }
+ }
+ 
+ await env.FORUM.put(
+   "thread:"+topichex,
+   JSON.stringify(thread)
+ );
+  return;
+}
+
+async function updateIndexMeta(env,slice){
+
+ let list = await env.FORUM.get("index:list","json")
+
+ if(!list) return
+ 
+ const renewreq = new Set();
+ for (const p of slice) {renewreq.add(p.hex);}
+ 
+ const nowtime=now();
+ for (const p of list) {
+	if (((nowtime - (p.meta_time ?? 0)) > 7200) && renewreq.has(p.hex)) {
+		const metadata = await getMeta(env, p.own);
+		p.meta_time = nowtime;
+		p.meta = metadata;
+	}
+ }
 
  await env.FORUM.put(
   "index:list",
@@ -670,6 +757,7 @@ async function newTopic(req,env,ctx){
   id:1,
   user:domain,
   meta:"",
+  meta_time:0,
   post:markdown,
   post_time:time,
   first_time:time,
@@ -699,6 +787,7 @@ async function newTopic(req,env,ctx){
   reply:0,
   own:domain,
   meta:"",
+  meta_time:0,
   title:tt
  })
 
@@ -1019,9 +1108,9 @@ async function handleMsg(env,parsed,buf1,skiptoken) {
 
 	for (const txt of txtRecords) {
 	if (txt.startsWith("kep=")) {
-		if (kep ==="") {kep=txt.slice(4);}
+		if (kep ==="" && txt.length>5) {kep=txt.slice(4);}
 	} else if (txt.startsWith("des=")) {
-		des.push(txt.slice(4).toLowerCase());
+		if (txt.length>5) {des.push(txt.slice(4).toLowerCase());}
 	}
 	}
 	
@@ -1203,6 +1292,109 @@ function parseMsg(buf) {
   };
 }
 
+async function getMeta(env,domain_str){
+  let cacheKey = await env.NerAPI.get("metacache:"+domain_str,"json")
+ if (!cacheKey) {
+	let nme = "";
+	let img = "";
+	let kep = "";
+	const txtRecords = await resolveTxt(domain_str)
+	
+	if (txtRecords==null) {
+		console.log("nslookup fail");
+		return "";
+	}
+
+	for (const txt of txtRecords) {
+	if (txt.startsWith("nme=")) {
+		if (nme ==="" && txt.length>5) {nme=txt.slice(4);}
+	} else if (txt.startsWith("img=")) {
+		if (img ==="" && txt.length>5) {img=txt.slice(4);}
+	} else if (txt.startsWith("kep=")) {
+		if (kep ==="" && txt.length>5) {kep=txt.slice(4);}
+	}
+	}
+	
+	if (nme.length > 255) {nme="";}
+	if (img.length > 255) {img="";}
+	
+	kep=encodeURIComponent(kep.toLowerCase()).slice(0,6);
+	if (img && img.length > 4) {
+	img=encodeURIComponent(img);
+	img=img.replace(/%2F/gi, "/").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+	img='https://'+img;
+	}
+	if (nme.startsWith("xn--")) {nme=punycodeDecode(nme.slice(4));}
+	nme=nme.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+	
+	await env.NerAPI.put("metacache:"+domain_str,JSON.stringify({nme:nme,img:img,uid:kep}), { expirationTtl: 3600*24 });
+	return JSON.stringify({name:nme,img:img,id:kep});
+ } else {
+	return JSON.stringify({name:cacheKey.nme,img:cacheKey.img,id:cacheKey.uid});
+ }
+}
+
+function punycodeDecode(input) {
+  const base = 36, tMin = 1, tMax = 26, skew = 38, damp = 700;
+  const initialBias = 72, initialN = 128, delimiter = "-";
+
+  function basicToDigit(code) {
+    if (code >= 48 && code <= 57) return code - 22; // 0-9
+    if (code >= 65 && code <= 90) return code - 65; // A-Z
+    if (code >= 97 && code <= 122) return code - 97; // a-z
+    return base;
+  }
+
+  function adapt(delta, numPoints, firstTime) {
+    delta = firstTime ? Math.floor(delta / damp) : delta >> 1;
+    delta += Math.floor(delta / numPoints);
+    let k = 0;
+    while (delta > ((base - tMin) * tMax) >> 1) {
+      delta = Math.floor(delta / (base - tMin));
+      k += base;
+    }
+    return k + Math.floor((base - tMin + 1) * delta / (delta + skew));
+  }
+
+  let n = initialN, i = 0, bias = initialBias;
+  const output = [];
+
+  const d = input.lastIndexOf(delimiter);
+  let index = 0;
+
+  if (d > -1) {
+    for (let j = 0; j < d; j++) output.push(input.charCodeAt(j));
+    index = d + 1;
+  }
+
+  while (index < input.length) {
+    let oldi = i, w = 1;
+
+    for (let k = base; ; k += base) {
+      const digit = basicToDigit(input.charCodeAt(index++));
+      i += digit * w;
+
+      const t =
+        k <= bias ? tMin :
+        k >= bias + tMax ? tMax :
+        k - bias;
+
+      if (digit < t) break;
+      w *= (base - t);
+    }
+
+    const outLen = output.length + 1;
+    bias = adapt(i - oldi, outLen, oldi === 0);
+    n += Math.floor(i / outLen);
+    i %= outLen;
+
+    output.splice(i, 0, n);
+    i++;
+  }
+
+  return String.fromCodePoint(...output);
+}
+
 function equalBytes(a, b) {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
@@ -1337,6 +1529,7 @@ async function addReply(env,point_to,selfhex,username,text,tag,perm){
   id:id,
   user:username,
   meta:"",
+  meta_time:0,
   post:text,
   post_time:time,
   first_time:time,
@@ -1377,6 +1570,7 @@ async function addTopic(env,hex,text,tag,perm,username){
   id:1,
   user:username,
   meta:"",
+  meta_time:0,
   post:markdown,
   post_time:time,
   first_time:time,
@@ -1406,6 +1600,7 @@ async function addTopic(env,hex,text,tag,perm,username){
   reply:0,
   own:username,
   meta:"",
+  meta_time:0,
   title:tt
  })
 
