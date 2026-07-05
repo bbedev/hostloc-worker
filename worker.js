@@ -1468,7 +1468,7 @@ async function resolveTxt(domain) {
 
   const data = await resp.json();
 
-  if (!data.Answer) return;
+  if (!data.Answer) return [];
 
   return data.Answer
     .filter(r => r.type === 16)
