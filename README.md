@@ -3,9 +3,37 @@ cf worker 搭建个人 bbs 论坛
 
 ## 部署方法
 
-长话短说
+### 一键部署（推荐方法）
 
 <br>
+
+### 1.点击下方按钮，一键部署
+
+[![Deploy to Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/net-punk/kep-worker/tree/main)
+
+---
+
+### 2.设置两个KV
+转到worker KV，添加两个KV：mykv1，mykv2
+
+绑定KV：转到绑定 **FORUM -> mykv1** ， **NerAPI -> mykv2** 。 绑定两个KV，完成后为如下形式：
+
+![](img/kv.png)
+
+### 3.绑定变量
+
+![](img/var.png)
+
+变量可以选纯文本与密钥，这里为了示例，使用纯文本
+
+变量含义以及设置方法可在此文末尾找到。
+
+<br>
+
+---
+
+
+## 手动部署（高级用户）
 
 ### 1.把这三个文件传到cf worker里面
 
@@ -13,11 +41,13 @@ cf worker 搭建个人 bbs 论坛
 
 ---
 
-### 2.绑定2个KV与1个速率限制器到worker
+### 2.绑定2个KV与2个速率限制器到worker
 
 ![](img/kv.png)
 
-速率限制器设置为300次/60s
+NerLimit速率限制器设置为300次/60s
+
+metaLimit速率限制器设置为1次/10s
 
 ---
 
@@ -49,9 +79,11 @@ cf worker 搭建个人 bbs 论坛
 - mainkey_base64: `openssl base64 -in mainkey.pub -out mainkey.txt`获取
 - pubkey_base64: `openssl base64 -in pkey.pub -out pkey.txt`获取
 - privkey_base64: `openssl base64 -in pkey.priv -out privkey.txt`获取
-- sigkey_base64: `openssl base64 -in pkey.sig -out sginkey.txt`获取
+- sigkey_base64: `openssl base64 -in pkey.sig -out signkey.txt`获取
 
 4个base64 key，使用kep-cli生成。`kepcli -act gen`，会生成新的密钥到当前目录。
+
+注意，如果Windows不存在openssl，可使用`certutil -encode mainkey.pub mainkey.txt`生成
 
 mainkey与pkey的TXT记录，需要绑定在domain上才能联机。单机使用只用填进去就行。
 
