@@ -2,17 +2,6 @@
 	"name": "worker-forum",
 	"main": "./worker.js",
 	"compatibility_date": "2026-07-02",
-	"workers_dev": false,
-	"kv_namespaces": [
-		{
-			"binding": "FORUM",
-			"id": "mykv100"
-		},
-		{
-			"binding": "NerAPI",
-			"id": "mykv101"
-		}
-	],
 	"ratelimits": [
 		{
 			"name": "NerLimit",
