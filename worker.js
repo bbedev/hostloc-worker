@@ -81,6 +81,12 @@ export default {
 	  }
    }
    
+   if (path.startsWith("/static/") && env.ASSETS && req.method === "GET") {
+      url.pathname = path.replace(/^\/static/, "");
+      const assetreq = new Request(url.toString(), req);
+      return env.ASSETS.fetch(assetreq);
+   }
+   
    if (path === "/manager")
     return manager(env,req)
 
