@@ -1,5 +1,5 @@
 {
-	"name": "worker-forum",
+	"name": "hostloc-worker",
 	"main": "./worker.js",
 	"compatibility_date": "2026-07-02",
 	"ratelimits": [
