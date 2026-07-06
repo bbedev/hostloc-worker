@@ -1,992 +1,557 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>stalltrix</title>
-	<style>
-        :root {
-            --primary-color: #3498db;
-            --primary-hover: #2980b9;
-            --bg-color: #f4f7f6;
-            --card-bg: #ffffff;
-            --text-main: #2c3e50;
-            --text-sub: #7f8c8d;
-            --border-color: #ecf0f1;
-            --spacing: 16px;
-            --radius: 5px; /* 统一圆角 */
-            --shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; }
-        a { text-decoration: none; color: inherit; transition: color 0.2s; }
-        ul { list-style: none; }
+<meta charset="utf-8">
+<title>美国VPS综合讨论 - 全球主机交流论坛</title>
 
-        header { background: var(--card-bg); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; margin-bottom: 20px; }
-        .nav-inner { max-width: 1100px; margin: 0 auto; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); cursor: pointer; }
-        .nav-controls select { padding: 5px 10px; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-sub); }
-
-        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 20px 20px; }
-        
-        .layout-wrapper { display: flex; gap: 20px; align-items: flex-start; }
-        .main-content { flex: 1; min-width: 0; /* 防止内容溢出 */ }
-        
-        @media (max-width: 800px) {
-            .layout-wrapper { flex-direction: column; }
-            .sidebar { width: 100% !important; margin-left: 0 !important; }
-        }
-
-        .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
-        
-        .post-item { cursor: pointer; display: flex; justify-content: space-between; align-items: flex-start; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .post-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
-        .post-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 5px; }
-        .post-meta { font-size: 0.85rem; color: var(--text-sub); }
-        .reply-badge { background: var(--primary-color); color: white; font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; min-width: 24px; text-align: center; }
-
-        .comment-item { border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px; }
-        .comment-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .comment-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .comment-user.is-me { color: var(--primary-color); font-weight: bold; }
-
-        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; margin-bottom: 10px; }
-        .btn { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background: var(--primary-hover); }
-
-        .sidebar {
-            width: 280px; 
-            flex-shrink: 0; 
-        }
-        .sidebar-widget {
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            padding: 20px;
-            line-height: 1.5;
-        }
-        .sidebar-widget h3 {
-            font-size: 16px;
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #555;
-            display: flex;
-            align-items: center;
-        }
-        .sidebar-widget h3::before {
-            content: "▶"; 
-            font-size: 12px;
-            margin-right: 8px;
-            color: #999;
-        }
-        .sidebar-widget p {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 15px;
-        }
-        .sidebar-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .sidebar-button {
-            display: inline-block;
-            padding: 8px 15px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            cursor: pointer;
-            border: none;
-        }
-		
-        .sidebar-button.blue {
-            background-color: #3192CC; 
-            color: #fff;
-        }
-        .sidebar-button.blue:hover {
-            background-color: #2779AA;
-        }
-        .sidebar-menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar-menu li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .sidebar-menu li:last-child {
-            border-bottom: none;
-        }
-        .sidebar-menu a {
-            text-decoration: none;
-            color: #555;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-        }
-        .sidebar-menu a:hover {
-            color: #333;
-        }
-        .sidebar-menu .icon {
-            margin-right: 10px;
-            font-size: 16px;
-            width: 20px; 
-            text-align: center;
-            color: #888; 
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            list-style: none;
-            padding: 10px;
-            margin: 20px 0;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .pagination a {
-            text-decoration: none;
-            color: #888;
-            padding: 10px 15px;
-            margin: 0 5px;
-            border-radius: 3px;
-            transition: background-color 0.3s, color 0.3s;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .pagination a.arrow {
-            color: #ccc; 
-            font-weight: normal;
-        }
-        .pagination a.arrow:not(.disabled):hover {
-             color: #555;
-        }
-        .pagination a.arrow.disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        .pagination a.page-number {
-            color: #555; 
-        }
-        .pagination a.active {
-            color: #337ab7;
-            position: relative;
-        }
-        .pagination a.active::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            bottom: 5px; 
-            transform: translateX(-50%);
-            width: 60%; 
-            height: 2px;
-            background-color: #337ab7;
-            border-radius: 1px;
-        }
-        .pagination a:not(.active):not(.arrow):hover {
-            color: #337ab7; 
-            background-color: #f9f9f9;
-        }
-		.markdown-body {
-line-height: 1.7;
-font-size: 14px;
+<link rel="stylesheet" href="static/style_common.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+@media (max-width:768px){
+    .pls .avatar img{
+        padding:3px 3px 4px;
+        width:35px;
+        background:none;
+    }
 }
-.markdown-body ul {
-    list-style: disc;
-    padding-left: 22px;
-}
-
-.markdown-body ol {
-    list-style: decimal;
-    padding-left: 22px;
-}
-
-.markdown-body li {
-    margin: 4px 0;
-}
-#thread-content {
-    background: var(--bg-color);
-    box-shadow: none;
-    padding: 1px;
-}
-#thread-content .comment-item {
-    background: #fff;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    padding: 19px;
-    margin-bottom: 15px;
-    border-bottom: none;
-}
-#thread-content .comment-item:last-child {
-    margin-bottom: 0;
-}
-.edit-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    margin-left: 8px;
-    color: var(--text-sub);
-    display: inline-flex;
-    align-items: center;
-}
-
-.edit-btn svg {
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
-}
-
-.edit-btn:hover {
-    color: var(--primary-color);
-}
-.reply-icon{
-  width:24px;
-  margin-left:auto;
-}
-.current-tag{
-    font-size:13px;
-    color: var(--text-muted);
-    margin-bottom:12px;
-}
-    </style>
-	<link rel="stylesheet" href="static/markdown.min.css">
+</style>
 </head>
-<body>
 
-    <!-- 顶部导航 -->
-    <header>
-        <div class="nav-inner">
-            <div class="logo" onclick="app.resetPage()">stalltrix</div>
-            <div class="nav-controls">
-                <select id="tag-selector" onchange="app.changeTag(this.value)">
-                    <option value="all">全部 (All)</option>
-                    <option value="0">保留 (0)</option>
-                    <option value="1">kep列表 (1)</option>
-					<option value="2">计算机网络 (2)</option>
-					<option value="3">软件开发 (3)</option>
-					<option value="4">富(多)媒体 (4)</option>
-					<option value="5">安全/密码学 (5)</option>
-					<option value="6">数据/AI (6)</option>
-					<option value="7">项目/开源 (7)</option>
-					<option value="8">数码/电脑 (8)</option>
-					<option value="9">龙门阵 (9)</option>
-					<option value="10">行业资讯 (10)</option>
-					<option value="11">公告/张贴 (11)</option>
-					<option value="12">服务器技术 (12)</option>
-					<option value="13">游戏 (13)</option>
-					<option value="14">闲聊 (14)</option>
-					<option value="15">推广 (15)</option>
-                </select>
-            </div>
-        </div>
-    </header>
 
-    <div class="container">
-        <div class="layout-wrapper">
-            
-            <main class="main-content">
-                
-                <div id="list-view">
-                    <div id="post-list">
-                    </div>
-                    
-                    <div id="pagination-container" class="pagination">
-                    </div>
-                </div>
+<body class="pg_forumdisplay">
+<div id="toptb" class="cl">
+<div class="wp">
+<div class="z">
+<a href="#">设为首页</a>
+<a href="#">收藏本站</a>
+</div>
+</div>
+</div>
+<div id="hd">
+<div class="wp">
+<div class="hdc cl">
+<h2>
+<a href="/index.php" title="全球主机交流论坛">
+<img src="static/logo.png">
+</a>
+</h2>
+<div class="fastlg cl">
 
-                <div id="detail-view" style="display: none;">
-                    <a href="javascript:void(0)" onclick="app.goHome()" style="display:inline-block; margin-bottom:15px; color:var(--primary-color); font-weight:bold;">&larr; 返回列表</a>
-					
-					<p class="current-tag"> 当前位置: <span id="nowtag"></span></p>
-                    
-                    <div id="thread-content" class="card">
-                    </div>
+<div class="y pns">
 
-                    <div class="card reply-area">
-                        <h3>发表回复</h3>
-                        <form onsubmit="app.submitReply(event)">
-                            <div style="margin-bottom:10px;">
-                                <label style="font-size:0.85rem; color:#888;">用户</label>
-                                <input type="text" id="r_user" placeholder="none" value="none" readonly>
-                            </div>
-                            <div style="margin-bottom:10px;">
-                                <label style="font-size:0.85rem; color:#888;">内容</label>
-                                <textarea id="r_payload" style="min-height:100px;" placeholder="Say something..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn" id="submit-btn">发送回复</button>
-                        </form>
-                    </div>
-                </div>
+<table>
 
-            </main>
+<tr id="userstate">
 
-            <aside class="sidebar">
-                <div class="sidebar-widget">
-                    <h3>信息面板</h3>
-                    <p><b>注意：</b>点击下方登录。 token登录</p>
-                    <div class="sidebar-buttons">
-                        <a href="javascript:void(0)" id="login-btn" onclick="app.openLogin()" class="sidebar-button blue">Sign In</a>
-                        <!--a href="#" class="sidebar-button green">Register</a-->
-                    </div>
-                </div>
+<td>用户名</td>
+<td><input class="px vm" id="user1"></td>
 
-    <div class="sidebar-widget sidebar-menu">
-        <h3>Function</h3>
-        <ul>
-            <li>
-                <a href="/index.php?manager=banuser">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M19.14 12.94a7.43 7.43 0 000-1.88l2.03-1.58a.5.5 0 00.12-.63l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7.28 7.28 0 00-1.63-.95l-.36-2.54A.5.5 0 0014.9 2h-3.8a.5.5 0 00-.49.41l-.36 2.54c-.58.23-1.12.54-1.63.95l-2.39-.96a.5.5 0 00-.6.22L3.71 8.48a.5.5 0 00.12.63l2.03 1.58a7.43 7.43 0 000 1.88L3.83 14.15a.5.5 0 00-.12.63l1.92 3.32a.5.5 0 00.6.22l2.39-.96c.51.41 1.05.72 1.63.95l.36 2.54a.5.5 0 00.49.41h3.8a.5.5 0 00.49-.41l.36-2.54c.58-.23 1.12-.54 1.63-.95l2.39.96a.5.5 0 00.6-.22l1.92-3.32a.5.5 0 00-.12-.63l-2.03-1.58z"/>
-                        </svg>
-                    </span>
-                    Manager
-                </a>
-            </li>
+<td class="fastlg_l">
+<label>
+<input type="checkbox" class="pc">
+自动登录
+</label>
+</td>
 
-            <li>
-                <a href="#">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M10 13a5 5 0 117-7l1.5-1.5A7 7 0 109.5 15L11 13.5l-1-1zM14 11a5 5 0 11-7 7L5.5 19.5A7 7 0 1014.5 9L13 10.5l1 0.5z"/>
-                        </svg>
-                    </span>
-                    Categories
-                </a>
-            </li>
+<td><a href="#">找回密码</a></td>
 
-            <li>
-                <a href="/index.php?manager=newpost">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M3 17.25V21h3.75l11-11-3.75-3.75-11 11zM20.71 7.04a1 1 0 000-1.41L18.37 3.29a1 1 0 00-1.41 0L15.13 5.12l3.75 3.75 1.83-1.83z"/>
-                        </svg>
-                    </span>
-                    New Post
-                </a>
-            </li>
-        </ul>
-    </div>
+</tr>
 
-    <div class="sidebar-widget sidebar-menu">
-        <h3>Sub</h3>
-        <ul>
-            <li>
-                <a href="#">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
-                        </svg>
-                    </span>
-                    Status
-                </a>
-            </li>
+<tr>
 
-            <li>
-                <a href="#" onclick="app.changeTag('rand')">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M4 7h16v2H4V7zm0 8h16v2H4v-2z"/>
-                        </svg>
-                    </span>
-                    Change
-                </a>
-            </li>
+<td>密码</td>
+<td id="passstate"><input type="password" class="px vm" id="pass1"></td>
 
-            <li>
-                <a href="#">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1014 15.5l.27.28v.79L20 21.5 21.5 20l-6-6zM10 15a5 5 0 110-10 5 5 0 010 10z"/>
-                        </svg>
-                    </span>
-                    Find
-                </a>
-            </li>
+<td class="fastlg_l">
+<button class="pn vm" style="width:75px" onclick="app.doLogin()">
+<em id="logintxt">登录</em>
+</button>
+</td>
 
-            <li>
-                <a href="https://github.com/stalltrix/kepweb">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M12 21s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 11c0 5.65-7 10-7 10z"/>
-                        </svg>
-                    </span>
-                    Star
-                </a>
-            </li>
+<td>
+<a href="#" class="xi2 xw1">注册</a>
+</td>
 
-            <li>
-                <a href="#">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M2 6h20v12H2zM4 8v8h16V8H4z"/>
-                        </svg>
-                    </span>
-                    Msg
-                </a>
-            </li>
+</tr>
 
-            <li>
-                <a href="#">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/>
-                        </svg>
-                    </span>
-                    Neighbor
-                </a>
-            </li>
-        </ul>
-    </div>
-</aside>
-        </div>
-    </div>
+</table>
 
-<div id="login-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:999;">
-    <div style="background:#fff; padding:25px; border-radius:6px; width:320px;">
-        <h3 style="margin-bottom:15px;">登录</h3>
-        <input type="text" id="api-user" placeholder="用户">
-        <input type="text" id="api-token" placeholder="输入 API Token">
-        <div style="text-align:right;">
-            <button class="btn" onclick="app.doLogin()">Login</button>
-            <button class="btn" style="background:#aaa" onclick="app.closeLogin()">Cancel</button>
-        </div>
-        <div id="login-msg" style="margin-top:10px; font-size:13px; color:#888;"></div>
-    </div>
 </div>
 
-<script src="static/marked.min.js"></script>
-<script src="static/markdown.js"></script>
+<div class="fastlg_fm y" style="margin-right:10px">
 
-<script>
-const TAG_MAP = {
-    0: {name:"保留", color:"#999999"},
-    1: {name:"kep列表", color:"#BF1E2E"},
-    2: {name:"计算机网络", color:"#0E76BD"},
-    3: {name:"软件开发", color:"#3AB54A"},
-    4: {name:"富(多)媒体", color:"#8E44AD"},
-    5: {name:"安全/密码学", color:"#C0392B"},
-    6: {name:"数据/AI", color:"#16A085"},
-    7: {name:"项目/开源", color:"#27AE60"},
-    8: {name:"数码/电脑", color:"#2C3E50"},
-    9: {name:"龙门阵", color:"#F7941D"},
-    10: {name:"行业资讯", color:"#7F8C8D"},
-    11: {name:"公告/张贴", color:"#F2D84A"},
-	12: {name:"服务器技术", color:"#14CADD"},
-    13: {name:"游戏", color:"#9CD0BD"},
-    14: {name:"闲聊", color:"#679514"},
-    15: {name:"推广", color:"#C4A812"}
-};
-const app = {
-    apiBase: '',
-    currentTag: 'all',
-    currentPage: 1,
-    currentHex: null,
-    pageSize: 16,
-	token: null,
-	currentUser: null,
-	currentNonce: null,
+<p>
+<img src="static/qq_login.gif">
+</p>
 
-    openLogin() {
-        document.getElementById('login-modal').style.display = 'flex';
-    },
+<p class="hm xg1">
+只需一步，快速开始
+</p>
 
-    closeLogin() {
-        document.getElementById('login-modal').style.display = 'none';
-    },
-	
-    editPost(id, hex, content) {
-     const editData = {
-        id: id,
-        hex: hex,
-        tag: this.currentTag,
-        content: content
-    };
-	
-	if (hex !== this.currentHex) {
-        editData.pointtoroot = this.currentHex;
-    }
+</div>
 
-    localStorage.setItem("forum_edit", JSON.stringify(editData));
+</div>
 
-    location.href = "/index.php?manager=newpost&mod=true";
-    },
-    async doLogin() {
-	    const user = document.getElementById('api-user').value.trim();
-        const token = document.getElementById('api-token').value.trim();
-        const msg = document.getElementById('login-msg');
+</div>
 
-        if (!token) {
-            msg.innerText = "请输入 token";
-            return;
-        }
+<table cellpadding="0" cellspacing="0" class="fwin" id="login-modal" style="display:none">
+    <tbody>
+        <tr>
+            <td class="t_l"></td>
+            <td class="t_c" style="cursor:move"></td>
+            <td class="t_r"></td>
+        </tr>
+        <tr>
+            <td class="m_l" style="cursor:move">&nbsp;&nbsp;</td>
 
-        msg.innerText = "登录中...";
+            <td class="m_c">
+                <div>
+                    <div>
+                        <h3 class="flb" style="cursor: move;">
+                            <em>
+                                用户登录</em>
+                        </h3>
+                        <div class="c cl">
+                            <div class="rfm">
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <div class="alert_error">
+                                                <p id="login-msg">抱歉，目前站点禁止新用户注册</p>
+                                            </div>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-        try {
-            const res = await fetch(`${this.apiBase}/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                credentials: "include",
-                body: JSON.stringify({ user,token })
-            });
+                            <div class="rfm mbw bw0">
+                                <table width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <th>&nbsp;</th>
+                                            <td>
+                                                <button class="pn pnc" tabindex="1" onclick='document.getElementById("login-modal").style.display="none";'><strong>关闭</strong></button>
+                                            </td>
+                                            <td>
 
-            const data = await res.json();
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-            if (data.status === 1) {
-                this.token = token;
-				this.currentUser = data.user;
-				this.currentNonce = data.nonce
-
-                msg.innerText = "登录成功";
-
-                this.closeLogin();
-
-                this.enableReply();
-				this.setLoggedIn();
-				if (data.user) {
-					document.getElementById('r_user').value = data.user;
-				}
-
-            } else {
-                msg.innerText = "登录失败";
-            }
-
-        } catch (e) {
-            msg.innerText = "网络错误";
-        }
-    },
-	async checkLogin() {
-
-    try {
-        const res = await fetch('/me', { credentials: "include" });
-        const data = await res.json();
-
-        if (data.status === 1) {
-
-            this.token = true;
-			this.currentUser = data.user;
-			this.currentNonce = data.nonce;
-			this.enableReply();
-            this.setLoggedIn();
-
-            if (data.user) {
-                document.getElementById('r_user').value = data.user;
-            }
-        }
-
-    } catch (e) {
-        ;
-    }
-	},
-	
-	generateNonce(){
-		return this.currentNonce+"_"+Math.random().toString(36).slice(2);
-	},
-	
-	setLoggedIn() {
-
-    const btn = document.getElementById('login-btn');
-
-    btn.innerText = "已登录";
-    btn.onclick = null;
-
-    btn.style.background = "#2ecc71";
-	},
-
-    enableReply() {
-        document.getElementById('r_payload').disabled = false;
-        document.getElementById('submit-btn').disabled = false;
-    },
-
-    async init() {
-    this.checkLogin();
-
-    const params = new URLSearchParams(location.search);
-    const topic = params.get("topic");
-	const page = params.get("p");
-	const tags = params.get("t");
-	if(/^[0-9a-f]+$/.test(topic)) {
-        this.currentHex = topic;
-        document.getElementById('list-view').style.display = 'none';
-        document.getElementById('detail-view').style.display = 'block';
-        await this.loadPost(topic);
-		const hash = location.hash;
-		if (hash&&hash.length>1){
-			let floor=hash.slice(1);
-			if (/^\d+$/.test(floor)){
-				if (floor>2){floor--;}
-				setTimeout(() => {
-				const jumpto=document.getElementById(`floor-${floor}`);
-				if (jumpto){
-				jumpto.scrollIntoView();
-				}
-				},200);
-			}
-		}
-    } else if (/^\d+$/.test(page)||/^\d+$/.test(tags)) {
-		if (tags&&tags.trim()!==''){
-			const tag = parseInt(tags);
-			if (!Number.isNaN(tag)&&tag>=0){this.changeTag(String(tag));}
-		}
-		if (page&&page.trim()!==''){
-			const pg = parseInt(page);
-			if (!Number.isNaN(pg)){this.goToPage(pg);}
-		}
-    } else {
-        this.loadIndex();
-    }
-
-    window.addEventListener("popstate", async (e) => {
-        const params = new URLSearchParams(location.search);
-        const topic = params.get("topic");
-
-        if(/^[0-9a-f]+$/.test(topic)) {
-            this.currentHex = topic;
-            document.getElementById('list-view').style.display = 'none';
-            document.getElementById('detail-view').style.display = 'block';
-            await this.loadPost(topic);
-			const hash = location.hash;
-			if (hash&&hash.length>1){
-			let floor=hash.slice(1);
-			if (/^\d+$/.test(floor)){
-			if (floor>2){floor--;}
-			setTimeout(() => {
-				const jumpto=document.getElementById(`floor-${floor}`);
-				if (jumpto){jumpto.scrollIntoView();}
-				},200);
-			}}
-        } else {
-            this.goHome(false);
-        }
-    });
-},
-
-    resetPage(){
-	    location.href="/index.php";
-	},
-
-    goHome(push = true) {
-
-    if (push) {
-		let pushstate='';
-		if (this.currentTag&&this.currentTag!=="all"&&this.currentTag!=="rand"){
-			pushstate=`?t=${this.currentTag}`;
-		}
-		if (this.currentPage&&this.currentPage>1){
-			if (pushstate!==''){
-				pushstate=pushstate+`&p=${this.currentPage}`;
-			} else {
-				pushstate=`?p=${this.currentPage}`;
-			}
-		}
-		if (pushstate!==''){
-		history.pushState({}, "", `/index.php${pushstate}`);
-		} else {
-        history.pushState({}, "", "/index.php");
-		}
-    }
-
-    document.getElementById('list-view').style.display = 'block';
-    document.getElementById('detail-view').style.display = 'none';
-
-    this.currentHex = null;
-	document.title="stalltrix";
-
-    window.scrollTo(0, 0);
-},
-
-    goToPost(hex) {
-    this.currentHex = hex;
-
-    history.pushState({topic: hex}, "", `/index.php?topic=${hex}`);
-
-    document.getElementById('list-view').style.display = 'none';
-    document.getElementById('detail-view').style.display = 'block';
-
-    this.loadPost(hex);
-    window.scrollTo(0, 0);
-},
-
-    changeTag(tagId) {
-        this.currentTag = tagId;
-        this.currentPage = 1;
-        this.loadIndex();
-		if (tagId&&tagId!=="all"&&tagId!=="rand"){history.pushState({t:tagId}, "", `/index.php?t=${tagId}`);}else{history.pushState({}, "", `/index.php`);}
-    },
-
-    goToPage(page) {
-        if (page < 1) return;
-        this.currentPage = page;
-        this.loadIndex();
-		if (this.currentTag&&this.currentTag!=="all"&&this.currentTag!=="rand"){
-		history.pushState({t:this.currentTag,p:page}, "", `/index.php?t=${this.currentTag}&p=${page}`);
-		}else{
-		history.pushState({p:page}, "", `/index.php?p=${page}`);
-		}
-    },
-
-    async loadIndex() {
-        const listContainer = document.getElementById('post-list');
-        listContainer.innerHTML = '<div class="card">加载中...</div>';
-
-        try {
-            const url = `${this.apiBase}/index/${this.currentTag}/${this.currentPage}`;
-            const res = await fetch(url, {
-				credentials: "include"
-			});
-            if (!res.ok) throw new Error('index api error');
-
-            const data = await res.json();
-
-            listContainer.innerHTML = '';
-            if (!Array.isArray(data) || data.length === 0) {
-                listContainer.innerHTML = '<div class="card">暂无内容</div>';
-                return;
-            }
-			
-			const setTop = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#303030"/><g clip-path="url(#clip)"><path d="M10.696 17.504c2.639-2.638 5.774-2.565 9.182-.696L32.62 9.745l-.721-4.958L43.213 16.1l-4.947-.71-7.074 12.73c1.783 3.638 1.942 6.544-.697 9.182l-7.778-7.778L6.443 41.556l11.995-16.31-7.742-7.742Z" stroke="#ffffff"  stroke-width="4" stroke-linejoin="round"/></g><defs><clipPath id="clip"><path d="M0 0h48v48H0z" fill="white"/></clipPath></defs></svg>`;
-
-            data.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'card post-item';
-                el.onclick = () => this.goToPost(item.hex);
-
-                const dateStr = new Date(
-                    parseInt(item.lasttime) * 1000
-                ).toLocaleString();
-
-            let metaObj = null;
-            try {
-                if (item.meta) {
-                    metaObj = JSON.parse(item.meta);
-                }
-            } catch(e) {}
-
-            let displayName = this.escapeHtml(item.own);
-            let avatar = "";
-
-            if (metaObj) {
-                if (metaObj.name) {
-                    displayName = this.escapeHtml(metaObj.name);
-                }
-
-                if (metaObj.img) {
-                    avatar = `<img src="${this.escapeHtml(metaObj.img)}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:6px;">`;
-                } else {
-					const seed = encodeURIComponent(displayName);
-					avatar = `<img src="https://avatar.stalltrix.com/avatar/${seed}.svg" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:6px;">`;
-				}
-            }
-
-            let typeBadge = "";
-            if (item.typeid && item.typeid != 0) {
-                typeBadge = `
-<span style="display:inline-flex;align-items:center;margin-left:6px;color:red;">
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px;">
-  <rect x="5" y="11" width="14" height="10" rx="2"></rect>
-  <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-</svg>
-${item.typeid}
-</span>`;
-            }
-			
-				const pinpost1 = (item.pintop && item.pintop ==1);
-				const tag = TAG_MAP[item.tag] || {name:"未知",color:"#999"};
-                el.innerHTML = `
-                    <div style="flex:1">
-                        <div class="post-title">${this.escapeHtml(item.lastview)} ${typeBadge} ${pinpost1 ? setTop : ''}</div>
-                        <div class="post-meta">
-                        ${avatar}<span>${displayName}</span> · 
-                            <span>Last active: ${dateStr}</span> ·  <span><b>in</b> ${tag.name}</span>
                         </div>
                     </div>
-                    <div class="reply-badge">${item.reply}</div>
-                `;
-                listContainer.appendChild(el);
-            });
 
-            this.renderPagination(data.length === this.pageSize);
+                </div>
+            </td>
 
-        } catch (err) {
-            listContainer.innerHTML = '<div class="card">加载失败</div>';
-            console.error(err);
-        }
-    },
+            <td class="m_r" style="cursor:move"></td>
+        </tr>
+        <tr>
+            <td class="b_l"></td>
+            <td class="b_c" style="cursor:move"></td>
+            <td class="b_r"></td>
+        </tr>
+    </tbody>
+</table>
 
-    renderPagination(hasNext) {
-        const container = document.getElementById('pagination-container');
+<div id="nv">
 
-        container.innerHTML = `
-            <a class="arrow ${this.currentPage === 1 ? 'disabled' : ''}"
-               onclick="${this.currentPage === 1 ? '' : `app.goToPage(${this.currentPage - 1})`}">&lt;</a>
+<ul>
 
-            <a class="page-number active">${this.currentPage}</a>
+<li class="a">
+<a href="/index.php">论坛<span>BBS</span></a>
+</li>
 
-            <a class="arrow ${hasNext ? '' : 'disabled'}"
-               onclick="${hasNext ? `app.goToPage(${this.currentPage + 1})` : ''}">&gt;</a>
-        `;
-    },
+<li>
+<a href="#">排行榜<span>Ranklist</span></a>
+</li>
 
-    async loadPost(hex) {
-        const container = document.getElementById('thread-content');
-		const mytag = document.getElementById('nowtag');
-        container.innerHTML = '<div>加载中...</div>';
+</ul>
 
-        try {
-            const url = `${this.apiBase}/view/${this.currentTag}/${hex}`;
-            const res = await fetch(url);
-            if (!res.ok) {
-				container.innerHTML = '<div>页面不存在或已删除</div>';
-				return
-			}
+</div>
+<div id="scbar" class="scbar_narrow cl">
 
-            const data = await res.json();
-            container.innerHTML = '';
-			
-			if (Array.isArray(data) && data.length != 0) {
-			const tag = TAG_MAP[data[0].tag] || {name:"未知",color:"#999"};
-			mytag.innerText = "/tag/"+tag.name+"("+String(data[0].tag)+")"
-			}
-	
-   if (!data.length){
-		container.innerHTML="暂无内容";
-		return;
-   } else {
-	const i = data[0].post.indexOf('\n');
-	let tt =i === -1?data[0].post:data[0].post.slice(0, i);
-	if (!tt.trimStart().startsWith('#')) {
-		document.title="帖子详情 - stalltrix";
-	} else {
-		tt = tt.replace(/^#+/, '');
-		tt = tt.trimStart();
-		document.title=tt+" - stalltrix";;
-	}
-   }
+<form id="scbar_form">
 
-            data.forEach(item => {
+<table cellspacing="0" cellpadding="0">
 
-    const canEdit = this.currentUser && item.user === this.currentUser;
-	const canreply = (this.token != null)
-	
-	const postDate = new Date(item.post_time * 1000);
-	const firstDate = new Date(item.first_time * 1000);
+<tr>
 
-	const dateStr = `<span title="${postDate.toLocaleString()}">${timeAgo(postDate)}</span>`;
-	const firstPost = `<span title="${firstDate.toLocaleString()}">${timeAgo(firstDate)}</span>`;
-	
-	const timeStr = item.post_time === item.first_time
-  ? dateStr
-  : `${firstPost} edited ${dateStr}`;
+<td class="scbar_icon_td"></td>
 
-    let metaObj = null;
-    try {
-        if (item.meta) {
-            metaObj = JSON.parse(item.meta);
-        }
-    } catch(e) {}
+<td class="scbar_txt_td">
 
-    let displayName = this.escapeHtml(item.user);
-    let userSuffix = "";
-    let avatar = "";
-    let metaId = this.escapeHtml(item.meta);
+<input
+type="text"
+name="srchtxt"
+id="scbar_txt"
+class="xg1"
+placeholder="请输入搜索内容"
+autocomplete="off">
 
-    if (metaObj) {
+</td>
 
-        if (metaObj.name) {
-            displayName = this.escapeHtml(metaObj.name);
-			if (metaObj.id) {
-				userSuffix = ` (${this.escapeHtml(metaObj.id)})`;
-			}
-			metaId = this.escapeHtml(item.user);
-        }
+<td class="scbar_type_td">
 
-        if (metaObj.img) {
-            avatar = `<img src="${this.escapeHtml(metaObj.img)}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:6px;">`;
-        } else {
-			const seed = encodeURIComponent(displayName);
-			avatar = `<img src="https://avatar.stalltrix.com/avatar/${seed}.svg" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:6px;">`;
-		}
-    }
+<a
+href="javascript:;"
+id="scbar_type"
+class="xg1"
+hidefocus="true">
 
-    const el = document.createElement('div');
-    el.className = 'comment-item';
+帖子
 
-    el.innerHTML = `
-        <div class="comment-header" id="floor-${item.id}">
-            <span class="comment-user ${item.me ? 'is-me' : ''}">
-                ${avatar}
-                #${item.id} ${displayName}${userSuffix} 
-				<span style="font-size:12px;color:#999"> · ${timeStr}</span>
-            </span>
+</a>
 
-            <span style="font-size:12px;color:#999">
-                ${metaId}
+</td>
 
-                ${canEdit ? `
-<button class="edit-btn" onclick='app.editPost(${item.id}, "${item.hex}", ${JSON.stringify(item.post)})' title="编辑">
-<svg viewBox="0 0 512 512">
-<path d="M362.7 19.3c25-25 65.5-25 90.5 0l39.5 39.5c25 25 25 65.5 0 90.5L189.3 452.7 0 512l59.3-189.3L362.7 19.3zM0 480l112-32-80-80L0 480z"/>
-</svg>
+<td class="scbar_btn_td">
+
+<button
+type="submit"
+name="searchsubmit"
+id="scbar_btn"
+class="pn pnc"
+value="true">
+
+<strong class="xi2">搜索</strong>
+
 </button>
-` : ''}
 
-            </span>
-        </div>
+</td>
 
-        <div class="markdown-body">${resolvMarkdown(item.post)}</div>
-		
-		${canreply ? `
-<div class="reply-icon">
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" onclick="btnreply('${displayName}','${userSuffix}')">
-  <path d="M10 9V5L3 12L10 19V15C15 15 18 16.5 21 20C20 14 17 9 10 9Z" 
-        fill="#555"/>
-</svg>
-</div>` : ''}
-    `;
+<td class="scbar_hot_td">
 
-    container.appendChild(el);
-});
+<div id="scbar_hot">
 
-        } catch (err) {
-            container.innerHTML = '<div>加载失败</div>';
-            console.error(err);
-        }
-    },
+<strong class="xw1">热搜:</strong>
 
-    async submitReply(e) {
-    e.preventDefault();
+<a href="#" class="xi2">香港vps</a>
+<a href="#" class="xi2">香港VPS</a>
+<a href="#" class="xi2">amh</a>
+<a href="#" class="xi2">机柜</a>
+<a href="#" class="xi2">vps</a>
+<a href="#" class="xi2">分销</a>
+<a href="#" class="xi2">VPS</a>
+<a href="#" class="xi2">域名出售</a>
+<a href="#" class="xi2">火车头</a>
+<a href="#" class="xi2">云主机</a>
+<a href="#" class="xi2">不限流量</a>
+<a href="#" class="xi2">香港服务器</a>
+<a href="#" class="xi2">美国服务器</a>
+<a href="#" class="xi2">香港</a>
+<a href="#" class="xi2">全能空间</a>
+<a href="#" class="xi2">whmcs</a>
+<a href="#" class="xi2">digitalocean</a>
 
+</div>
+
+</td>
+
+</tr>
+
+</table>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="wp">
+
+<div id="pt" class="bm cl">
+
+<div class="z">
+
+<a href="/index.php">全球主机交流论坛</a>
+<em>»</em>
+
+<a href="/index.php">论坛</a>
+<em>›</em>
+
+<a href="/index.php">主机综合交流</a>
+<em>›</em>
+
+<a href="/index.php">美国VPS综合讨论</a>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="wp1" class="wp">
+<div class="bm bml pbn">
+
+<div class="bm_h cl">
+
+<h1 class="xs2">
+
+美国VPS综合讨论
+
+<span class="xs1 xw0 i">
+
+今日:
+<strong class="xi1">1026</strong>
+
+<span class="pipe">|</span>
+
+主题:
+<strong class="xi1">1115816</strong>
+
+<span class="pipe">|</span>
+
+排名:
+<strong class="xi1">1</strong>
+
+</span>
+
+</h1>
+
+</div>
+
+<div class="bm_c">
+
+<div>
+
+版主:
+
+<span class="xi2">
+
+<a href="#">Cat</a>,
+<a href="#">咯拉无米</a>,
+<a href="#">小新</a>,
+<a href="#">137405406</a>,
+<a href="#">欧阳逍遥</a>,
+<a href="#">temp</a>
+
+</span>
+
+</div>
+
+<div class="ptn xg2">
+
+还有这里只探讨主机相关话题，其他无关言论不要在此发表，否则浪费的是版主们的时间，还有你们的ID，更重要得是会浪费你们的打字时间。此地非IDC的公告区。
+
+
+</div>
+
+</div>
+
+</div>
+
+<div id="pgt" class="bm bw0 pgs cl">
+<span id="fd_page_top"><div class="pg"><strong>1</strong><a href="#2">2</a><a href="#3">3</a><a href="#4">4</a><a href="#5">5</a><a href="#6">6</a><a href="#7">7</a><a href="#8">8</a><a href="#9">9</a><a href="#10">10</a><a href="#" class="last">... 1000</a><label><input type="text" name="custompage" class="px" size="2" title="输入页码，按回车快速跳转" value="1" onkeydown="if(event.keyCode==13) {window.location='#page='+this.value;; doane(event);}"><span title="共 1000 页"> / 1000 页</span></label><a href="#" class="nxt">下一页</a></div></span>
+<span class="pgb y"><a href="#">返&nbsp;回</a></span>
+<a href="/index.php?manager=newpost" title="发新帖"><img src="static/pn_post.png" alt="发新帖"></a></div>
+<ul id="thread_types" class="ttp bm cl cttp">
+
+<li class="fold">收起</li>
+
+<li class="a"><a href="#">全部</a></li>
+<li><a href="#">美国VPS 47976</a></li>
+<li><a href="#">不限流量 37543</a></li>
+<li><a href="#">特价VPS 16532</a></li>
+<li><a href="#">Windows VPS 104431</a></li>
+<li><a href="#">疑问 98451</a></li>
+<li><a href="#">经验 20339</a></li>
+<li><a href="#">翻译 6233</a></li>
+<li><a href="#">已解决 3371</a></li>
+
+</ul>
+<div id="threadlist" class="tl bm bmw">
+
+<div class="th">
+
+<table>
+
+<tr>
+
+<th colspan="2">帖子</th>
+<td class="by">作者</td>
+<td class="num">回复/查看</td>
+<td class="by">最后发表</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<div class="bm_c">
+
+<table id="threadlisttableid"></table>
+
+</div>
+
+</div>
+
+<div class="bm bw0 pgs cl">
+
+<div id="pagination"></div>
+
+</div>
+
+
+
+</div>
+
+<div id="wp2" class="pg_viewthread" style="display:none">
+<div class="wp">
+
+<div id="postlist" class="pl bm">
+
+<table>
+<tr>
+
+<td class="pls ptn pbn">
+
+<div class="hm ptn">
+
+<span class="xg1">查看:</span>
+<span id="view_count" class="xi1">0</span>
+
+<span class="pipe">|</span>
+
+<span class="xg1">回复:</span>
+<span id="reply_count" class="xi1">0</span>
+
+</div>
+
+</td>
+
+
+<td class="plc ptm pbn vwthd">
+
+<h1 class="ts">
+
+<span id="thread_subject">加载中...</span>
+
+</h1>
+
+</td>
+
+</tr>
+</table>
+
+
+
+<div id="thread-content"></div>
+
+</div>
+
+<table cellspacing="0" cellpadding="0">
+<tbody><tr>
+<td class="pls">
+</td>
+<td class="plc">
+
+<span id="fastpostreturn"></span>
+
+
+<div class="cl">
+<div id="fastsmiliesdiv" class="y"><div id="fastsmiliesdiv_data"><div id="fastsmilies"></div></div></div><div class="hasfsl" id="fastposteditor">
+<div class="tedt mtn" style="width:280%">
+<div class="bar">
+<span class="y">
+<a>高级模式</a>
+</span>
+</div>
+<div class="area" contenteditable="false" id="reply-text">
+<div class="pt hm">
+您需要登录后才可以回帖 <a href="#" onclick="letedit(true)" class="xi2">登录</a> | <a href="#register" class="xi2">注册</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="seccheck_fastpost">
+</div>
+
+
+<p class="ptm pnpost">
+<a href="javascript:alert('没有实现积分')" class="y">本版积分规则</a>
+<button type="button" onclick="app.submitReply()" class="pn pnc vm" value="replysubmit" tabindex="5"><strong>发表回复</strong></button>
+<label for="fastpostrefresh"><input id="fastpostrefresh" type="checkbox" class="pc">回帖后跳转到最后一页</label>
+
+</p>
+</td>
+</tr>
+</tbody></table>
+
+</div>
+
+</div>
+
+
+<script>
+
+class ThreadSPA{
+
+constructor(){
+this.apiBase="";
+this.currentTag="all";
+this.currentNonce="";
+}
+
+
+getHex(){
+const params = new URLSearchParams(location.search);
+
+const topicId = params.get('topic');
+
+if (topicId && topicId.length > 4) {
+	return topicId
+}
+return null;
+
+}
+
+
+
+escapeHtml(text) {
+    if (!text) return '';
+    return text
+	.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+	.replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+generateNonce(){
+	return this.currentNonce+"_"+Math.random().toString(36).slice(2);
+}
+
+async submitReply() {
     if (!this.token) {
         alert("未登录");
         return;
     }
 
     const payload = {
-        post_payload: document.getElementById('r_payload').value,
+        post_payload: document.getElementById('reply-text').innerText,
         tag: parseInt(this.currentTag),
-        point_to: this.currentHex,
+        point_to: this.getHex(),
 		nonce: this.generateNonce()
     };
 	
-	if (!payload.post_payload || payload.post_payload.length<3) {
+	if (!payload.post_payload || payload.post_payload.length < 3 || payload.post_payload==="写下你的回复...") {
 		alert("回复不能为空");
         return;
 	}
 
     try {
 
-        const res = await fetch(`${this.apiBase}/view/${this.currentTag}/${this.currentHex}`, {
+        const res = await fetch(`${this.apiBase}/view/${this.currentTag}/${this.getHex()}`, {
             method: 'POST',
             credentials: "include",
             headers: { 'Content-Type': 'application/json' },
@@ -1012,9 +577,9 @@ ${item.typeid}
 			return;
 		}
 		
-		document.getElementById('r_payload').value = '';
+		document.getElementById('reply-text').value = '';
 
-        this.loadPost(this.currentHex);
+        this.loadPost(this.getHex());
 
     } catch (err) {
 
@@ -1022,37 +587,611 @@ ${item.typeid}
         console.error(err);
 
     }
-	},
+}
 
-    escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-			.replace(/"/g,"&quot;")
-            .replace(/'/g,"&#39;");
+async checkLogin() {
+    try {
+        const res = await fetch('/me', { credentials: "include" });
+        const data = await res.json();
+
+        if (data.status === 1) {
+
+            this.token = true;
+			this.currentUser = data.user;
+			this.currentNonce = data.nonce;
+			letedit(true);
+
+            if (data.user) {
+                document.getElementById('userstate').innerText = "当前用户: "+data.user;
+				document.getElementById('logintxt').innerText = "已登录";
+				document.getElementById('passstate').innerText = "";
+            }
+        }
+
+    } catch (e) {
+        ;
     }
-};
+}
 
-window.onload = () => app.init();
-function btnreply(user,publickey) {
-    let lastInput=document.getElementById('r_payload').value
+async doLogin() {
+	    const user = document.getElementById('user1').value.trim();
+        const token = document.getElementById('pass1').value.trim();
+        const msg = document.getElementById('login-msg');
+
+        if (!token) {
+            msg.innerText = "请输入密码";
+			document.getElementById("login-modal").style.display = "flex";
+            return;
+        }
+
+        msg.innerText = "登录中...";
+
+        try {
+            const res = await fetch(`${this.apiBase}/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({ user,token })
+            });
+
+            const data = await res.json();
+
+            if (data.status === 1) {
+                this.token = token;
+				this.currentUser = data.user;
+				this.currentNonce = data.nonce
+				letedit(true);
+
+                msg.innerText = "登录成功";
+
+				if (data.user) {
+					document.getElementById('userstate').innerText = "当前用户: "+data.user;
+					document.getElementById('logintxt').innerText = "已登录";
+					document.getElementById('passstate').innerText = "";
+				}
+
+            } else {
+                msg.innerText = "登录失败";
+				document.getElementById("login-modal").style.display = "flex";
+            }
+
+        } catch (e) {
+            msg.innerText = "网络错误";
+			document.getElementById("login-modal").style.display = "flex";
+        }
+}
+
+async loadPost(hex){
+
+const container=document.getElementById("thread-content");
+document.getElementById("wp1").style.display = "none";
+container.innerHTML="加载中...";
+
+try{
+
+const res=await fetch(`${this.apiBase}/view/all/${hex}`);
+
+if(!res.ok){
+
+container.innerHTML="帖子不存在";
+
+return;
+
+}
+
+const data=await res.json();
+
+container.innerHTML="";
+
+if(!data.length){
+
+container.innerHTML="暂无内容";
+
+return;
+
+}
+this.checkLogin()
+let post_commit='';
+const i = data[0].post.indexOf('\n');
+let tt =i === -1 ? data[0].post : data[0].post.slice(0, i);
+if (!tt.trimStart().startsWith('#')) {
+	post_commit=data[0].post;
+	document.getElementById("thread_subject").innerText="帖子";
+	document.title="帖子 - 全球主机交流论坛";
+} else {
+	post_commit = i === -1 ? ''  : data[0].post.slice(i + 1);
+	tt = tt.replace(/^#+/, '');
+	tt = tt.trimStart();
+	document.getElementById("thread_subject").innerText=tt;
+	document.title=tt+" - 全球主机交流论坛";;
+}
+
+document.getElementById("view_count").innerText=data[0].view||0;
+
+document.getElementById("reply_count").innerText=data.length-1;
+
+
+data.forEach((item,i)=>{
+
+const floor=i+1;
+
+const postTime=new Date(item.post_time*1000).toLocaleString();
+
+let metaObj = null;
+    try {
+        if (item.meta) {
+            metaObj = JSON.parse(item.meta);
+        }
+    } catch(e) {}
+	
+	let displayName = this.escapeHtml(item.user);
+    let userSuffix = "";
+    let avatar = "";
+    let metaId = this.escapeHtml(item.meta);
+	
+	if (metaObj) {
+        if (metaObj.name) {
+            displayName = this.escapeHtml(metaObj.name);
+			if (metaObj.id) {
+				userSuffix = ` (${this.escapeHtml(metaObj.id)})`;
+			}
+			metaId = this.escapeHtml(item.user);
+        }
+
+        if (metaObj.img) {
+            avatar = `${this.escapeHtml(metaObj.img)}`;
+        } else {
+			avatar = `https://avatar.stalltrix.com/avatar/${encodeURIComponent(displayName)}.svg`;
+		}
+    }
+
+
+const post=document.createElement("div");
+
+post.id="post_"+item.id;
+if (item.id !==1) {
+	post_commit=item.post;
+}
+const canEdit = app.currentUser && item.user === app.currentUser;
+const canreply = (app.token != null)
+post.innerHTML=`
+
+<table class="plhin">
+
+<tr>
+
+<td class="pls">
+
+<div class="favatar">
+
+<div class="pi">
+
+<div class="authi">
+
+<a class="xw1">${displayName}${userSuffix}</a>
+
+</div>
+
+</div>
+
+
+<div class="avatar">
+
+<img src="${avatar}">
+
+</div>
+
+</div>
+
+</td>
+
+
+<td class="plc">
+
+
+<div class="pi">
+
+<strong>
+
+<a>
+
+<em>${floor}</em><sup>#</sup>
+
+</a>
+
+</strong>
+
+
+<div class="pti">
+
+<div class="authi">
+
+<em>发表于 ${postTime}</em> ${canEdit ? `
+<a onclick='app.editPost(${item.id}, "${item.hex}", ${JSON.stringify(item.post)})' title="编辑">
+ 修改
+</a>
+` : ''}
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="pct">
+
+<div class="pcb">
+
+
+<div class="t_fsz">
+
+<table>
+
+<tr>
+
+<td class="t_f">
+
+${this.renderMarkdown(post_commit)}
+
+</td>
+
+</tr>
+
+</table>
+
+
+</div>
+
+</div>
+
+</div>
+
+</td>
+
+</tr>
+
+
+<tr>
+
+<td class="pls"></td>
+
+<td class="plc">
+
+<div class="po">
+
+<div class="pob">
+
+<em>
+
+<a href="javascript:;" onclick="app.reply('${displayName}','${userSuffix}')">
+
+回复
+
+</a>
+
+</em>
+
+</div>
+
+</div>
+
+</td>
+
+</tr>
+
+
+</table>
+
+`;
+
+
+container.appendChild(post);
+
+});
+
+}
+
+catch(err){
+
+container.innerHTML="加载失败";
+
+}
+
+}
+
+
+
+renderMarkdown(text){
+const txt=this.escapeHtml(text);
+return txt.replace(/\n/g,"<br>");
+//return resolvMarkdown(text);
+}
+
+
+reply(user,publickey){
+	if (!this.token){alert('未登录');}
+	let lastInput=document.getElementById('reply-text').innerText;
+	if (lastInput==="写下你的回复...") {lastInput="";}
 	if (publickey==="") {
 		lastInput=lastInput+'@'+user+' '
 	} else {
 		publickey=publickey.replace(/ /g, "");
 		lastInput=lastInput+'@'+user+publickey+' '
 	}
-	document.getElementById('r_payload').value=lastInput
-};
-function timeAgo(ts) {
-  const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}min ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}days ago`;
-};
+	document.getElementById('reply-text').innerText=lastInput
+
+}
+
+editPost(id, hex, content) {
+     const editData = {
+        id: id,
+        hex: hex,
+        tag: this.currentTag,
+        content: content
+    };
+	
+	if (hex !== this.getHex()) {
+        editData.pointtoroot = this.getHex();
+    }
+
+    localStorage.setItem("forum_edit", JSON.stringify(editData));
+
+    location.href = "/index.php?manager=newpost&mod=true";
+}
+
+}
+
+class ForumSPA{
+
+constructor(){
+
+this.api=""
+this.page=1
+this.pageSize=16
+
+this.table=document.getElementById("threadlisttableid")
+this.pagination=document.getElementById("pagination")
+
+this.load()
+
+}
+
+
+escapeHtml(str){
+if(!str) return ""
+return str.replace(/[&<>"']/g,function(m){
+return {
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+}[m]
+})
+}
+
+
+
+getAvatar(name,img){
+
+if(img && img.length>5)
+return img
+
+const seed=encodeURIComponent(name)
+
+return `https://avatar.stalltrix.com/avatar/${seed}.svg`
+
+}
+
+
+
+async load(){
+
+this.table.innerHTML='<tr><td colspan="5">加载中...</td></tr>'
+
+try{
+
+const res=await fetch(`${this.api}/index/all/${this.page}`,{
+credentials:"include"
+})
+
+const data=await res.json()
+
+this.render(data)
+
+this.renderPagination(data.length===this.pageSize)
+app.checkLogin()
+}catch(e){
+
+this.table.innerHTML='<tr><td colspan="5">加载失败</td></tr>'
+
+}
+
+}
+
+
+
+render(list){
+
+this.table.innerHTML=""
+
+if(!list || list.length===0){
+
+this.table.innerHTML='<tr><td colspan="5">暂无帖子</td></tr>'
+return
+
+}
+
+list.forEach(item=>{
+
+let meta=null
+
+try{
+meta=JSON.parse(item.meta)
+}catch(e){}
+
+let name=item.own
+let avatar=""
+
+if(meta){
+
+if(meta.name) name=meta.name
+
+avatar=this.getAvatar(name,meta.img)
+
+}
+
+const date=new Date(parseInt(item.lasttime)*1000)
+.toLocaleString()
+
+const tbody=document.createElement("tbody")
+
+tbody.innerHTML=`
+
+<tr>
+
+<td class="icn">
+<img src="/static/folder_new.gif">
+</td>
+
+<th class="new">
+
+<a class="s xst inlink" href="/index.php?topic=${item.hex}">
+${this.escapeHtml(item.lastview)}
+</a>
+
+</th>
+
+<td class="by">
+
+<cite>
+<img src="${avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:6px;">
+${this.escapeHtml(name)}
+</cite>
+
+</td>
+
+<td class="num">
+<a>${item.reply}</a>
+<em>${item.views}</em>
+</td>
+
+<td class="by">
+
+<cite>${this.escapeHtml(name)}</cite>
+<em>${date}</em>
+
+</td>
+
+</tr>
+
+`
+
+this.table.appendChild(tbody)
+
+})
+
+}
+
+
+
+renderPagination(hasNext){
+
+let html='<div class="pg">'
+
+if(this.page>1){
+
+html+=`<a href="#" data-page="${this.page-1}">上一页</a>`
+
+}
+
+html+=`<strong>${this.page}</strong>`
+
+if(hasNext){
+
+html+=`<a href="#" data-page="${this.page+1}">下一页</a>`
+
+}
+
+html+='</div>'
+
+this.pagination.innerHTML=html
+
+this.pagination.querySelectorAll("a").forEach(a=>{
+
+a.onclick=e=>{
+
+e.preventDefault()
+
+this.page=parseInt(a.dataset.page)
+
+this.load()
+
+window.scrollTo(0,0)
+
+}
+
+})
+
+}
+
+}
+
+document.addEventListener("click", function(e) {
+  const link = e.target.closest("a.inlink");
+  if (!link) return;
+
+  e.preventDefault();
+  const url = link.getAttribute("href");
+
+  history.pushState(null, "", url);
+  loadPage(url);
+});
+
+function loadPage(url) {
+  document.getElementById("wp1").style.display = "none";
+  document.getElementById("wp2").style.display = "flex";
+  const topicId = new URLSearchParams(url.split('?')[1]).get('topic');
+  app.loadPost(topicId);
+}
+
+
+window.app=new ThreadSPA();
+new ForumSPA();
+
+const postid=app.getHex();
+if (postid && postid.length > 4) {
+loadPage('/?topic='+postid);
+}
+
+function letedit(enable){
+	if (enable) {
+		document.getElementById("reply-text").innerHTML="写下你的回复...";
+		document.getElementById("reply-text").contentEditable=true;
+	} else {
+		document.getElementById("reply-text").contentEditable=false;
+		document.getElementById("reply-text").innerHTML=`<div class="pt hm"您需要登录后才可以回帖 <a href="#" onclick="letedit(true)" class="xi2">登录</a> | <a href="#register" class="xi2">注册</a></div>`;
+	}
+}
 </script>
+<script src="static/marked.min.js"></script>
+<script src="static/markdown.js"></script>
+
+<script>
+(function (){
+    Array.from(document.querySelectorAll('[width="32.9%"]')).forEach( el => {
+        el.width = ''
+    })
+    Array.from(document.querySelectorAll('.plhin')).forEach(v => {
+        let fromEl = v.querySelector('.favatar.pls .authi');
+        let toEl = v.querySelector('[id^="authorposton"]')
+        toEl.textContent = fromEl.textContent.trim() + ' ' + toEl.textContent
+    })
+})()
+</script>
+
 </body>
 </html>
